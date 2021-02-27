@@ -74,20 +74,27 @@ def write_to_excel(filename, data_list, **kwargs):
 
 def scan_folder(folder, **kwargs):
     result_list = list()
+    file_count = 0
     for dir_path, dir_names, file_names in os.walk(folder, followlinks=False):
         for file_name in [f for f in file_names if f.endswith(".xlsx")]:
             excel_filename = os.path.normpath(os.path.join(dir_path, file_name))
-            print(f'Processing {file_name}......')
+            if kwargs.get('verbose'):
+                print(f'Processing {file_name}......')
             #print(os.path.normpath(os.path.join(dir_path, file_name)))
             file_result = parse_statement(excel_filename, **kwargs)
-            result_list += file_result
-    return result_list
+            if kwargs.get('verbose'):
+                print(f' Processed {len(file_result)} records')
+            if len(file_result) > 0:
+                result_list += file_result
+                file_count += 1
+    return result_list, file_count
 
 
 if __name__ == '__main__':
     export_json = False
+    verbose = False
     #src_filename = './data/ESTADO-DE-CUENTA-TARJETA-DE-CREDITO-2021-02-27.xlsx'
-    row_list = scan_folder('./data/')
+    row_list, files_processed = scan_folder('./data/', verbose=verbose)
 
     # print(row_list)
     if len(row_list) > 0:
@@ -98,3 +105,9 @@ if __name__ == '__main__':
                 json_file.write(json.dumps(row_list))
         excel_output_file = f'./output/{timestamp}_estado_cuenta.xlsx'
         write_to_excel(excel_output_file, row_list)
+
+        msg = f' Wrote {len(row_list)} records from {files_processed} files in {excel_output_file}'
+        print('-' * (len(msg) + 20))
+        print(msg)
+        print('-' * (len(msg) + 20))
+
