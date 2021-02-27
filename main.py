@@ -1,3 +1,6 @@
+import json
+from datetime import datetime
+
 from openpyxl import load_workbook
 
 
@@ -28,7 +31,7 @@ def parse_statement(filename, **kwargs):
             try:
                 # charges = row[mappings['charges']['col']].value
                 # print(f'{row_num}. {charges} {type(charges)}')
-                row_dict= dict()
+                row_dict = dict()
                 for column_name in mappings.keys():
                     row_dict[column_name] = mappings[column_name]
                     row_dict[column_name]['value'] = row[mappings['charges']['col']].value
@@ -44,5 +47,10 @@ def parse_statement(filename, **kwargs):
 
 if __name__ == '__main__':
     filename = './data/ESTADO-DE-CUENTA-TARJETA-DE-CREDITO-2021-02-27.xlsx'
-    row_list  = parse_statement(filename)
+    row_list = parse_statement(filename)
+
     print(row_list)
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    json_output_file = f'./output/{timestamp}_estado_cuenta.json'
+    with open(json_output_file, 'w', encoding='utf-8') as json_file:
+        json_file.write(json.dumps(row_list))
