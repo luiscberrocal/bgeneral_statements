@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 from copy import deepcopy
@@ -39,7 +40,7 @@ def parse_statement(filename, **kwargs):
                     row_dict[attribute_name]['value'] = row[mappings[attribute_name]['col']].value
                     row_dict[attribute_name]['row_num'] = row_num
                     row_dict[attribute_name]['source_file'] = filename
-                #print(f'{row_num}. {charges} {row_dict["charges"]["value"]} {type(charges)}')
+                # print(f'{row_num}. {charges} {row_dict["charges"]["value"]} {type(charges)}')
                 row_data_list.append(deepcopy(row_dict))
             except Exception as e:
                 raise e
@@ -80,7 +81,7 @@ def scan_folder(folder, **kwargs):
             excel_filename = os.path.normpath(os.path.join(dir_path, file_name))
             if kwargs.get('verbose'):
                 print(f'Processing {file_name}......')
-            #print(os.path.normpath(os.path.join(dir_path, file_name)))
+            # print(os.path.normpath(os.path.join(dir_path, file_name)))
             file_result = parse_statement(excel_filename, **kwargs)
             if kwargs.get('verbose'):
                 print(f' Processed {len(file_result)} records')
@@ -90,24 +91,51 @@ def scan_folder(folder, **kwargs):
     return result_list, file_count
 
 
+def ensure_dir(file_path):
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+
 if __name__ == '__main__':
-    export_json = False
-    verbose = False
-    #src_filename = './data/ESTADO-DE-CUENTA-TARJETA-DE-CREDITO-2021-02-27.xlsx'
+    # Create the parser
+    my_parser = argparse.ArgumentParser(description='Convert statements to one single Excel file')
+    my_parser.add_argument('-v',
+                           '--verbose',
+                           action='store_true',
+                           help='Prints extra info')
+    my_parser.add_argument('-j',
+                           '--json',
+                           action='store_true',
+                           help='Saves file to json format in the Output folder')
+    my_parser.add_argument('-o',
+                           '--output-folder',
+                           action='store',
+                           help='Output folder',
+                           default='./output')
+    # Add the arguments
+    # my_parser.add_argument('Path',
+    #                        metavar='path',
+    #                        type=str,
+    #                        help='the path to list')
+    args = my_parser.parse_args()
+    export_json = args.json
+    verbose = args.verbose
+    ensure_dir(args.output_folder)
+
     row_list, files_processed = scan_folder('./data/', verbose=verbose)
 
     # print(row_list)
     if len(row_list) > 0:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         if export_json:
-            json_output_file = f'./output/{timestamp}_estado_cuenta.json'
+            json_output_file = os.path.join(args.output_folder, f'{timestamp}_estado_cuenta.json')
             with open(json_output_file, 'w', encoding='utf-8') as json_file:
                 json_file.write(json.dumps(row_list))
-        excel_output_file = f'./output/{timestamp}_estado_cuenta.xlsx'
+        excel_output_file = os.path.join(args.output_folder, f'{timestamp}_estado_cuenta.xlsx')
         write_to_excel(excel_output_file, row_list)
 
         msg = f' Wrote {len(row_list)} records from {files_processed} files in {excel_output_file}'
         print('-' * (len(msg) + 20))
         print(msg)
         print('-' * (len(msg) + 20))
-
