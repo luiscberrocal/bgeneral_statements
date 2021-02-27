@@ -1,4 +1,6 @@
 import json
+import os
+from copy import deepcopy
 from datetime import datetime
 
 from openpyxl import load_workbook, Workbook
@@ -26,29 +28,28 @@ def parse_statement(filename, **kwargs):
     sheet = wb[sheet_name]
     row_num = 1
     row_data_list = list()
-    row_dict = dict()
     for row in sheet.rows:
         row_dict = dict()
         if row_num >= first_data_row:
             try:
-                charges = row[mappings['charges']['col']].value
+                # charges = row[mappings['charges']['col']].value
 
                 for attribute_name in mappings.keys():
                     row_dict[attribute_name] = mappings[attribute_name]
                     row_dict[attribute_name]['value'] = row[mappings[attribute_name]['col']].value
                     row_dict[attribute_name]['row_num'] = row_num
                     row_dict[attribute_name]['source_file'] = filename
-                print(f'{row_num}. {charges} {row_dict["charges"]["value"]} {type(charges)}')
-                row_data_list.append(row_dict)
+                #print(f'{row_num}. {charges} {row_dict["charges"]["value"]} {type(charges)}')
+                row_data_list.append(deepcopy(row_dict))
             except Exception as e:
                 raise e
-        if row_num >= first_data_row:
-            print(f'{row_num}.  {row_data_list[row_num - first_data_row]["charges"]["value"]}')
-        print('-' * 60)
+        # if row_num >= first_data_row:
+        #     print(f'{row_num}.  {row_data_list[row_num - first_data_row]["charges"]["value"]}')
+        # print('-' * 60)
         row_num += 1
-    print('86-' * 60)
-    row_num = 86
-    print(f'{row_num}.  {row_data_list[row_num - first_data_row]["charges"]["value"]}')
+    # print('86-' * 60)
+    # row_num = 86
+    # print(f'{row_num}.  {row_data_list[row_num - first_data_row]["charges"]["value"]}')value
     return row_data_list
 
 
@@ -71,16 +72,29 @@ def write_to_excel(filename, data_list, **kwargs):
     wb.save(filename)
 
 
+def scan_folder(folder, **kwargs):
+    result_list = list()
+    for dir_path, dir_names, file_names in os.walk(folder, followlinks=False):
+        for file_name in [f for f in file_names if f.endswith(".xlsx")]:
+            excel_filename = os.path.normpath(os.path.join(dir_path, file_name))
+            print(f'Processing {file_name}......')
+            #print(os.path.normpath(os.path.join(dir_path, file_name)))
+            file_result = parse_statement(excel_filename, **kwargs)
+            result_list += file_result
+    return result_list
+
+
 if __name__ == '__main__':
-    export_json = True
-    filename = './data/ESTADO-DE-CUENTA-TARJETA-DE-CREDITO-2021-02-27.xlsx'
-    row_list = parse_statement(filename)
+    export_json = False
+    #src_filename = './data/ESTADO-DE-CUENTA-TARJETA-DE-CREDITO-2021-02-27.xlsx'
+    row_list = scan_folder('./data/')
 
     # print(row_list)
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    if export_json:
-        json_output_file = f'./output/{timestamp}_estado_cuenta.json'
-        with open(json_output_file, 'w', encoding='utf-8') as json_file:
-            json_file.write(json.dumps(row_list))
-    excel_output_file = f'./output/{timestamp}_estado_cuenta.xlsx'
-    write_to_excel(excel_output_file, row_list)
+    if len(row_list) > 0:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        if export_json:
+            json_output_file = f'./output/{timestamp}_estado_cuenta.json'
+            with open(json_output_file, 'w', encoding='utf-8') as json_file:
+                json_file.write(json.dumps(row_list))
+        excel_output_file = f'./output/{timestamp}_estado_cuenta.xlsx'
+        write_to_excel(excel_output_file, row_list)
