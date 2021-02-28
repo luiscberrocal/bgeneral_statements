@@ -6,25 +6,28 @@ from datetime import datetime
 
 from openpyxl import load_workbook, Workbook
 
+from config import base_settings
+
+
+def get_configuration(filename):
+    config_path = base_settings.ROOT_DIR / 'config'
+    config_filename = os.path.join(config_path, filename)
+    if not os.path.exists(config_filename):
+        msg = f'Configuration file {config_filename} not found'
+        raise Exception(msg)
+    with open(config_filename, 'r') as json_file:
+        config = json.load(json_file)
+    return config
+
 
 def parse_statement(filename, **kwargs):
-    first_data_row = kwargs.get('first_data_row', 9)
+    configuration = get_configuration('credit_card_config.json')
+    first_data_row = configuration['start_row']
     sheet_name = kwargs.get('sheet_name', 'BGPMainScreen')
     # Cuenta	Tarjeta  	Fecha transacción	Fecha proceso	Descripción
     # Referencia	Categoría	Cargos (Db)	Pagos (Cr)
 
-    mappings = {
-        'account': {'name': 'Cuenta', 'col': 1},
-        'card': {'name': 'Tarjeta', 'col': 2},
-        'transaction_date': {'name': 'Fecha transacción', 'col': 3},
-        'process_date': {'name': 'Fecha proceso', 'col': 4},
-        'description': {'name': 'Descripcion', 'col': 5},
-        'reference': {'name': 'Referencia', 'col': 8},
-        'category': {'name': 'Categoría', 'col': 9},
-        'charges': {'name': 'Cargos', 'col': 10},
-        'payments': {'name': 'Pagos', 'col': 11},
-    }
-
+    mappings = configuration['mappings']
     wb = load_workbook(filename=filename, data_only=True)
     sheet = wb[sheet_name]
     row_num = 1
@@ -38,12 +41,16 @@ def parse_statement(filename, **kwargs):
                 for attribute_name in mappings.keys():
                     row_dict[attribute_name] = mappings[attribute_name]
                     row_dict[attribute_name]['value'] = row[mappings[attribute_name]['col']].value
-                    row_dict[attribute_name]['row_num'] = row_num
-                    row_dict[attribute_name]['source_file'] = filename
+
                 # print(f'{row_num}. {charges} {row_dict["charges"]["value"]} {type(charges)}')
-                row_data_list.append(deepcopy(row_dict))
+
             except Exception as e:
                 raise e
+            finally:
+                row_dict['row_num'] = {'name': 'Row number', 'value': row_num}
+                row_dict['source_file'] = {'name': 'Source file', 'value': filename}
+                row_data_list.append(deepcopy(row_dict))
+
         # if row_num >= first_data_row:
         #     print(f'{row_num}.  {row_data_list[row_num - first_data_row]["charges"]["value"]}')
         # print('-' * 60)
@@ -114,10 +121,10 @@ if __name__ == '__main__':
                            help='Output folder',
                            default='./output')
     my_parser.add_argument('-d',
-                          '--data-folder',
-                          action='store',
-                          help='Data folder. Place your Excel statements herw',
-                          default='./data')
+                           '--data-folder',
+                           action='store',
+                           help='Data folder. Place your Excel statements herw',
+                           default='./data')
 
     # Add the arguments
     # my_parser.add_argument('Path',
