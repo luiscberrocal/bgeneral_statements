@@ -1,13 +1,13 @@
 # Bank Statement Consolidation (Banco General)
 
-Resetly had to check some insurance payments. Currentlt you hace to download each statment by month.
+Recetnly had to check some insurance payments in my credit card. Currently you have to download each statement by month.
 Then copy paste the part that contains the data.
 
 I created this script to automate the copy paste part.
 
 ## How to use
 
-Clone the repo and copy your statement to the data folder.
+Clone the repo and copy your statements to the data folder.
 
 Run:
 
