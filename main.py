@@ -113,6 +113,12 @@ if __name__ == '__main__':
                            action='store',
                            help='Output folder',
                            default='./output')
+    my_parser.add_argument('-d',
+                          '--data-folder',
+                          action='store',
+                          help='Data folder. Place your Excel statements herw',
+                          default='./data')
+
     # Add the arguments
     # my_parser.add_argument('Path',
     #                        metavar='path',
@@ -123,7 +129,7 @@ if __name__ == '__main__':
     verbose = args.verbose
     ensure_dir(args.output_folder)
 
-    row_list, files_processed = scan_folder('./data/', verbose=verbose)
+    row_list, files_processed = scan_folder(args.data_folder, verbose=verbose)
 
     # print(row_list)
     if len(row_list) > 0:
@@ -139,3 +145,5 @@ if __name__ == '__main__':
         print('-' * (len(msg) + 20))
         print(msg)
         print('-' * (len(msg) + 20))
+    else:
+        print(f'Found no excel files in {args.data_folder}')
