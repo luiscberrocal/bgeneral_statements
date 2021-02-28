@@ -6,18 +6,7 @@ from datetime import datetime
 
 from openpyxl import load_workbook, Workbook
 
-from config import base_settings
-
-
-def get_configuration(filename):
-    config_path = base_settings.ROOT_DIR / 'config'
-    config_filename = os.path.join(config_path, filename)
-    if not os.path.exists(config_filename):
-        msg = f'Configuration file {config_filename} not found'
-        raise Exception(msg)
-    with open(config_filename, 'r') as json_file:
-        config = json.load(json_file)
-    return config
+from utils import get_configuration
 
 
 def parse_statement(filename, **kwargs):
