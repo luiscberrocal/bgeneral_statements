@@ -51,8 +51,8 @@ if __name__ == '__main__':
     configuration = dict()
     configuration['mappings'] = mappings
     configuration['start_row'] = 9
-    config_filename = set_configuration('credit_card_config.json', configuration)
-    if config_filename is not None:
-        print(f'Wrote config file {config_filename}')
+    config_file = set_configuration('credit_card_config.json', configuration)
+    if config_file is not None:
+        print(f'Wrote config file {config_file}')
     else:
         print('File already exists. Run with over_write parameter')
